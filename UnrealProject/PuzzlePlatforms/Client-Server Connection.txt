@@ -1,0 +1,32 @@
+"C:\Program Files\Epic Games\UE_4.23\Engine\Binaries\Win64\UE4Editor.exe"
+
+"S:\Dev\Udemy\Unreal C++ Multiplayer Master Intermediate Game Development\1_Puzzle_Platforms\PuzzlePlatforms\PuzzlePlatforms.uproject"
+
+\Game\ThirdPersonCPP\Maps\ThirdPersonExampleMap
+
+-log
+-game
+-server
+
+192.168.10.104
+
+
+■ コマンドでのクライアント起動確認
+"C:\Program Files\Epic Games\UE_4.23\Engine\Binaries\Win64\UE4Editor.exe" "S:\Dev\Udemy\Unreal C++ Multiplayer Master Intermediate Game Development\1_Puzzle_Platforms\PuzzlePlatforms\PuzzlePlatforms.uproject" -log -game
+
+
+■ サーバー起動
+"C:\Program Files\Epic Games\UE_4.23\Engine\Binaries\Win64\UE4Editor.exe" "S:\Dev\Udemy\Unreal C++ Multiplayer Master Intermediate Game Development\1_Puzzle_Platforms\PuzzlePlatforms\PuzzlePlatforms.uproject" /Game/ThirdPersonCPP/Maps/ThirdPersonExampleMap?listen -log -server
+
+※サーバー起動する場合、マップの指定が無いとクライアントから接続した時に真っ暗になるかもしれない
+※「?listen」は不要かもしれないが、クライアント接続時に真っ暗になるなら試す価値はある。macのターミナルの場合エラーになるのでむしろ除外しておくが、確認時は問題なく動いた
+
+
+■ クライアント起動＆サーバー接続
+"C:\Program Files\Epic Games\UE_4.23\Engine\Binaries\Win64\UE4Editor.exe" "S:\Dev\Udemy\Unreal C++ Multiplayer Master Intermediate Game Development\1_Puzzle_Platforms\PuzzlePlatforms\PuzzlePlatforms.uproject" 192.168.10.104:7777 -log -game
+
+
+■ サーバー: mac、クライアント: windows
+"C:\Program Files\Epic Games\UE_4.23\Engine\Binaries\Win64\UE4Editor.exe" "S:\Dev\Udemy\Unreal C++ Multiplayer Master Intermediate Game Development\1_Puzzle_Platforms\PuzzlePlatforms\PuzzlePlatforms.uproject" 25.12.147.188:7777 -log -game
+
+※IPv4アドレスはHamachiのものなので、適切な値に変更して実行する必要がある
