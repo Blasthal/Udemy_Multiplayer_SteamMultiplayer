@@ -7,8 +7,15 @@
 #include "UObject/ConstructorHelpers.h"
 #include "Blueprint/UserWidget.h"
 #include "OnlineSubsystem.h"
+#include "OnlineSessionSettings.h"
 
 #include "PlatformTrigger.h"
+
+
+namespace
+{
+	const static FName SessionName = TEXT("My Session Game");
+}
 
 
 UPuzzlePlatformsGameInstance::UPuzzlePlatformsGameInstance(const FObjectInitializer& ObjectInitializer)
@@ -52,10 +59,22 @@ void UPuzzlePlatformsGameInstance::Init()
 	{
 		UE_LOG(LogTemp, Warning, TEXT("Founded subsystem %s"), *Subsystem->GetSubsystemName().ToString());
 
-		IOnlineSessionPtr SessionInterface = Subsystem->GetSessionInterface();
+		SessionInterface = Subsystem->GetSessionInterface();
 		if (SessionInterface.IsValid())
 		{
 			UE_LOG(LogTemp, Warning, TEXT("Founded session interface"));
+
+			SessionInterface->OnCreateSessionCompleteDelegates.AddUObject(this, &UPuzzlePlatformsGameInstance::OnCreateSessionComplete);
+			SessionInterface->OnDestroySessionCompleteDelegates.AddUObject(this, &UPuzzlePlatformsGameInstance::OnDestroySessionComplete);
+			SessionInterface->OnFindSessionsCompleteDelegates.AddUObject(this, &UPuzzlePlatformsGameInstance::OnFindSessionsComplete);
+
+			SessionSearch = MakeShareable(new FOnlineSessionSearch());
+			if (SessionSearch.IsValid())
+			{
+				SessionInterface->FindSessions(0, SessionSearch.ToSharedRef());
+
+				UE_LOG(LogTemp, Warning, TEXT("FindSessions Start"));
+			}
 		}
 	}
 	else
@@ -110,34 +129,19 @@ void UPuzzlePlatformsGameInstance::LoadInGameMenu()
 
 void UPuzzlePlatformsGameInstance::Host()
 {
-	check(MainMenu);
-	if (MainMenu)
+	if (SessionInterface.IsValid())
 	{
-		MainMenu->TearDown();
+		// 既にセッションがある場合は、セッションを破棄する
+		FNamedOnlineSession* ExistingSession = SessionInterface->GetNamedSession(SessionName);
+		if (ExistingSession)
+		{
+			SessionInterface->DestroySession(SessionName);
+		}
+		else
+		{
+			CreateSession();
+		}
 	}
-
-
-	UEngine* Engine = GetEngine();
-	check(Engine);
-	if (!Engine)
-	{
-		return;
-	}
-
-
-	UWorld* World = GetWorld();
-	check(World);
-	if (!World)
-	{
-		return;
-	}
-
-
-	UE_LOG(LogTemp, Warning, TEXT("Hosting"));
-	Engine->AddOnScreenDebugMessage(INDEX_NONE, 2.0f, FColor::Green, TEXT("Hosting"));
-
-	//World->ServerTravel(TEXT("/Game/ThirdPersonCPP/Maps/ThirdPersonExampleMap"));
-	World->ServerTravel(TEXT("/Game/ThirdPersonCPP/Maps/ThirdPersonExampleMap?listen"));
 }
 
 
@@ -200,4 +204,78 @@ void UPuzzlePlatformsGameInstance::LoadMainMenu()
 	Engine->AddOnScreenDebugMessage(INDEX_NONE, 2.0f, FColor::Green, TEXT("LoadMainMenu"));
 
 	PlayerController->ClientTravel(TEXT("/Game/MenuSystem/MainMenu"), ETravelType::TRAVEL_Absolute);
+}
+
+
+void UPuzzlePlatformsGameInstance::OnCreateSessionComplete(FName SessionName, bool bSuccess)
+{
+	ensure(bSuccess);
+	if (!bSuccess)
+	{
+		UE_LOG(LogTemp, Warning, TEXT("Could not create session. SessionName=%s"), *SessionName.ToString());
+		return;
+	}
+
+
+	check(MainMenu);
+	if (MainMenu)
+	{
+		MainMenu->TearDown();
+	}
+
+
+	UEngine* Engine = GetEngine();
+	check(Engine);
+	if (!Engine)
+	{
+		return;
+	}
+
+
+	UWorld* World = GetWorld();
+	check(World);
+	if (!World)
+	{
+		return;
+	}
+
+
+	UE_LOG(LogTemp, Warning, TEXT("OnCreateSessionComplete() SessionName=%s"), *SessionName.ToString());
+	Engine->AddOnScreenDebugMessage(INDEX_NONE, 2.0f, FColor::Green, *FString::Format(TEXT("SessionName={0}"), { *SessionName.ToString() } ));
+
+	//World->ServerTravel(TEXT("/Game/ThirdPersonCPP/Maps/ThirdPersonExampleMap"));
+	World->ServerTravel(TEXT("/Game/ThirdPersonCPP/Maps/ThirdPersonExampleMap?listen"));
+}
+
+
+void UPuzzlePlatformsGameInstance::OnDestroySessionComplete(FName SessionName, bool bSuccess)
+{
+	UE_LOG(LogTemp, Warning, TEXT("OnDestroySessionComplete() SessionName=%s"), *SessionName.ToString());
+
+	if (bSuccess)
+	{
+		CreateSession();
+	}
+}
+
+
+void UPuzzlePlatformsGameInstance::OnFindSessionsComplete(bool bSuccess)
+{
+	UE_LOG(LogTemp, Warning, TEXT("OnFindSessionsComplete()"));
+
+	if (bSuccess)
+	{
+	UE_LOG(LogTemp, Warning, TEXT("OnFindSessionsComplete()"));
+
+	}
+}
+
+
+void UPuzzlePlatformsGameInstance::CreateSession()
+{
+	if (SessionInterface.IsValid())
+	{
+		const FOnlineSessionSettings SessionSettings;
+		SessionInterface->CreateSession(0, SessionName, SessionSettings);
+	}
 }

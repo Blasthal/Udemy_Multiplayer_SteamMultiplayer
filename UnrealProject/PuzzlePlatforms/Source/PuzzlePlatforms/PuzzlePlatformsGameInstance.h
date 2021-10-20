@@ -8,6 +8,7 @@
 #include "MenuSystem/MainMenu.h"
 #include "MenuSystem/InGameMenu.h"
 #include "MenuSystem/MenuWidget.h"
+#include "Interfaces/OnlineSessionInterface.h"
 
 #include "PuzzlePlatformsGameInstance.generated.h"
 
@@ -51,4 +52,14 @@ private:
 
 	TSubclassOf<UUserWidget> InGameMenuClass = nullptr;
 	UInGameMenu* InGameMenu = nullptr;
+
+	IOnlineSessionPtr SessionInterface = nullptr;
+
+	TSharedPtr<FOnlineSessionSearch> SessionSearch;
+
+	void OnCreateSessionComplete(FName SessionName, bool bSuccess);
+	void OnDestroySessionComplete(FName SessionName, bool bSuccess);
+	void OnFindSessionsComplete(bool bSuccess);
+
+	void CreateSession();
 };
