@@ -9,8 +9,6 @@
 #include "OnlineSubsystem.h"
 #include "OnlineSessionSettings.h"
 
-#include "PlatformTrigger.h"
-
 
 namespace
 {
@@ -67,16 +65,6 @@ void UPuzzlePlatformsGameInstance::Init()
 			SessionInterface->OnCreateSessionCompleteDelegates.AddUObject(this, &UPuzzlePlatformsGameInstance::OnCreateSessionComplete);
 			SessionInterface->OnDestroySessionCompleteDelegates.AddUObject(this, &UPuzzlePlatformsGameInstance::OnDestroySessionComplete);
 			SessionInterface->OnFindSessionsCompleteDelegates.AddUObject(this, &UPuzzlePlatformsGameInstance::OnFindSessionsComplete);
-
-			SessionSearch = MakeShareable(new FOnlineSessionSearch());
-			if (SessionSearch.IsValid())
-			{
-				//SessionSearch->bIsLanQuery = true;
-
-				SessionInterface->FindSessions(0, SessionSearch.ToSharedRef());
-
-				UE_LOG(LogTemp, Warning, TEXT("FindSessions Start"));
-			}
 		}
 	}
 	else
@@ -209,6 +197,21 @@ void UPuzzlePlatformsGameInstance::LoadMainMenu()
 }
 
 
+void UPuzzlePlatformsGameInstance::RefreshServerList()
+{
+	SessionSearch = MakeShareable(new FOnlineSessionSearch());
+	if (SessionSearch.IsValid())
+	{
+		// true‚¶‚á‚È‚¢ê‡‚ÍLAN‚Æ‚»‚êˆÈŠO‚Ì—¼•û‚ðŒ©‚é‚æ‚¤‚É‚È‚é‚ç‚µ‚¢
+		//SessionSearch->bIsLanQuery = true;
+
+		SessionInterface->FindSessions(0, SessionSearch.ToSharedRef());
+
+		UE_LOG(LogTemp, Warning, TEXT("FindSessions Start"));
+	}
+}
+
+
 void UPuzzlePlatformsGameInstance::OnCreateSessionComplete(FName SessionName, bool bSuccess)
 {
 	ensure(bSuccess);
@@ -265,16 +268,26 @@ void UPuzzlePlatformsGameInstance::OnFindSessionsComplete(bool bSuccess)
 {
 	UE_LOG(LogTemp, Warning, TEXT("OnFindSessionsComplete()"));
 
-	if (bSuccess)
+	if (!bSuccess)
 	{
-		if (SessionSearch.IsValid())
-		{
-			for (FOnlineSessionSearchResult& SearchResult : SessionSearch->SearchResults)
-			{
-				UE_LOG(LogTemp, Warning, TEXT("Find Session Id Str: %s"), *SearchResult.GetSessionIdStr());
-			}
-		}
+		return;
 	}
+
+	if (!SessionSearch.IsValid())
+	{
+		return;
+	}
+
+
+	TArray<FString> ServerNames;
+	for (FOnlineSessionSearchResult& SearchResult : SessionSearch->SearchResults)
+	{
+		UE_LOG(LogTemp, Warning, TEXT("Find Session Id Str: %s"), *SearchResult.GetSessionIdStr());
+
+		ServerNames.Add(SearchResult.GetSessionIdStr());
+	}
+
+	MainMenu->SetServerList(ServerNames);
 }
 
 

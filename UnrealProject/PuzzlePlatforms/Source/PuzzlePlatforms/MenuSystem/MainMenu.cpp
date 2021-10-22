@@ -3,9 +3,63 @@
 
 #include "MainMenu.h"
 
+#include "ScrollBox.h"
 #include "Components/Button.h"
 #include "Components/WidgetSwitcher.h"
 #include "Components/EditableTextBox.h"
+#include "UObject/ConstructorHelpers.h"
+
+#include "ServerRow.h"
+#include "TextBlock.h"
+
+
+UMainMenu::UMainMenu(const FObjectInitializer& ObjectInitializer)
+{
+	// サーバー情報1行分
+	const ConstructorHelpers::FClassFinder<UUserWidget> ServerRowBPClass(TEXT("/Game/MenuSystem/WBP_ServerRow"));
+	check(ServerRowBPClass.Class);
+	if (ServerRowBPClass.Class)
+	{
+		UE_LOG(LogTemp, Warning, TEXT("Found class %s, in Constructor"), *ServerRowBPClass.Class->GetName());
+
+		ServerRowClass = ServerRowBPClass.Class;
+	}
+}
+
+
+void UMainMenu::SetServerList(TArray<FString> ServerNames)
+{
+
+	UWorld* World = GetWorld();
+	check(World);
+	if (!World)
+	{
+		return;
+	}
+
+	check(ServerList);
+	if (!ServerList)
+	{
+		return;
+	}
+
+
+	ServerList->ClearChildren();
+
+	for (const FString& ServerName : ServerNames)
+	{
+		UServerRow* ServerRow = CreateWidget<UServerRow>(this, ServerRowClass);
+		check(ServerRow);
+		if (!ServerRow)
+		{
+			return;
+		}
+
+		ServerRow->ServerName->SetText(FText::FromString(ServerName));
+
+		ServerList->AddChild(ServerRow);
+	}
+}
 
 
 bool UMainMenu::Initialize()
@@ -37,6 +91,11 @@ bool UMainMenu::Initialize()
 		JoinOkButton->OnClicked.AddDynamic(this, &UMainMenu::JoinServer);
 	}
 
+	if (ServerList)
+	{
+		// TODO
+	}
+
 
 	return true;
 }
@@ -56,13 +115,40 @@ void UMainMenu::HostServer()
 
 void UMainMenu::JoinServer()
 {
-	UE_LOG(LogTemp, Warning, TEXT("JoinServer(%s) - %s"), *IPAddressField->GetText().ToString(), *HostButton->GetName());
-
 	check(MenuInterface);
-	if (MenuInterface)
+	if (!MenuInterface)
 	{
-		MenuInterface->Join(IPAddressField->GetText().ToString());
+		return;
 	}
+
+	check(ServerList);
+	if (!ServerList)
+	{
+		return;
+	}
+
+
+	//UE_LOG(LogTemp, Warning, TEXT("JoinServer(%s) - %s"), *IPAddressField->GetText().ToString(), *HostButton->GetName());
+
+	//MenuInterface->Join(ServerList->selected->GetText().ToString());
+
+	//UWorld* World = GetWorld();
+	//check(World);
+	//if (!World)
+	//{
+	//	return;
+	//}
+
+	//UServerRow* ServerRow = CreateWidget<UServerRow>(this, ServerRowClass);
+	//check(ServerRow);
+	//if (!ServerRow)
+	//{
+	//	return;
+	//}
+
+	//ServerRow->ServerName->SetText(FText::FromString(TEXT("Test")));
+
+	//ServerList->AddChild(ServerRow);
 }
 
 
@@ -98,5 +184,15 @@ void UMainMenu::OpenJoinMenu()
 	}
 
 	MenuSwitcher->SetActiveWidget(JoinMenu);
+
+
+	check(MenuInterface);
+	if (!MenuInterface)
+	{
+		return;
+	}
+
+	ServerList->ClearChildren();
+	MenuInterface->RefreshServerList();
 }
 

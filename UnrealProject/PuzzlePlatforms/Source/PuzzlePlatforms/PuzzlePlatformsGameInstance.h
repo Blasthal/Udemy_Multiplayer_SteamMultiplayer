@@ -45,6 +45,8 @@ public:
 	UFUNCTION(Exec)
 	virtual void LoadMainMenu() override;
 
+	virtual void RefreshServerList() override;
+
 
 private:
 	TSubclassOf<UUserWidget> MenuClass = nullptr;
