@@ -12,7 +12,7 @@
 
 namespace
 {
-	const static FName SessionName = TEXT("My Session Game");
+	const static FName SESSION_NAME = TEXT("My Session Game");
 }
 
 
@@ -65,6 +65,7 @@ void UPuzzlePlatformsGameInstance::Init()
 			SessionInterface->OnCreateSessionCompleteDelegates.AddUObject(this, &UPuzzlePlatformsGameInstance::OnCreateSessionComplete);
 			SessionInterface->OnDestroySessionCompleteDelegates.AddUObject(this, &UPuzzlePlatformsGameInstance::OnDestroySessionComplete);
 			SessionInterface->OnFindSessionsCompleteDelegates.AddUObject(this, &UPuzzlePlatformsGameInstance::OnFindSessionsComplete);
+			SessionInterface->OnJoinSessionCompleteDelegates.AddUObject(this, &UPuzzlePlatformsGameInstance::OnJoinSessionComplete);
 		}
 	}
 	else
@@ -122,10 +123,10 @@ void UPuzzlePlatformsGameInstance::Host()
 	if (SessionInterface.IsValid())
 	{
 		// 既にセッションがある場合は、セッションを破棄する
-		FNamedOnlineSession* ExistingSession = SessionInterface->GetNamedSession(SessionName);
+		FNamedOnlineSession* ExistingSession = SessionInterface->GetNamedSession(SESSION_NAME);
 		if (ExistingSession)
 		{
-			SessionInterface->DestroySession(SessionName);
+			SessionInterface->DestroySession(SESSION_NAME);
 		}
 		else
 		{
@@ -135,34 +136,12 @@ void UPuzzlePlatformsGameInstance::Host()
 }
 
 
-void UPuzzlePlatformsGameInstance::Join(const FString& Address)
+void UPuzzlePlatformsGameInstance::Join(uint32 Index)
 {
-	check(MainMenu);
-	if (MainMenu)
-	{
-		MainMenu->TearDown();
-	}
+	check(SessionInterface);
+	check(SessionSearch.IsValid());
 
-
-	UEngine* Engine = GetEngine();
-	check(Engine);
-	if (!Engine)
-	{
-		return;
-	}
-
-	APlayerController* PlayerController = GetFirstLocalPlayerController();
-	check(PlayerController);
-	if (!PlayerController)
-	{
-		return;
-	}
-
-
-	UE_LOG(LogTemp, Warning, TEXT("Joining %s"), *Address);
-	Engine->AddOnScreenDebugMessage(INDEX_NONE, 5.0f, FColor::Green, FString::Printf(TEXT("Joining %s"), *Address));
-
-	PlayerController->ClientTravel(Address, ETravelType::TRAVEL_Absolute);
+	SessionInterface->JoinSession(0, SESSION_NAME, SessionSearch->SearchResults[Index]);
 }
 
 
@@ -291,6 +270,47 @@ void UPuzzlePlatformsGameInstance::OnFindSessionsComplete(bool bSuccess)
 }
 
 
+void UPuzzlePlatformsGameInstance::OnJoinSessionComplete(FName SessionName, EOnJoinSessionCompleteResult::Type Result)
+{
+	if (!SessionInterface.IsValid())
+	{
+		check(nullptr);
+		return;
+	}
+
+	check(MainMenu);
+	if (MainMenu)
+	{
+		MainMenu->TearDown();
+	}
+
+
+	FString Address;
+	if (!SessionInterface->GetResolvedConnectString(SESSION_NAME, Address))
+	{
+		return;
+	}
+
+
+	APlayerController* PlayerController = GetFirstLocalPlayerController();
+	check(PlayerController);
+	if (!PlayerController)
+	{
+		return;
+	}
+
+
+	UE_LOG(LogTemp, Warning, TEXT("OnJoinSessionComplete() Address=%s"), *Address);
+	if (GEngine)
+	{
+		GEngine->AddOnScreenDebugMessage(INDEX_NONE, 2.0f, FColor::Green, FString::Format(TEXT("JoinSession {0}"), { *Address }));
+	}
+
+
+	PlayerController->ClientTravel(Address, ETravelType::TRAVEL_Absolute);
+}
+
+
 void UPuzzlePlatformsGameInstance::CreateSession()
 {
 	if (SessionInterface.IsValid())
@@ -299,6 +319,7 @@ void UPuzzlePlatformsGameInstance::CreateSession()
 		SessionSettings.bIsLANMatch = true;
 		SessionSettings.NumPublicConnections = 2;
 		SessionSettings.bShouldAdvertise = true;
-		SessionInterface->CreateSession(0, SessionName, SessionSettings);
+
+		SessionInterface->CreateSession(0, SESSION_NAME, SessionSettings);
 	}
 }

@@ -40,7 +40,7 @@ public:
 	virtual void Host() override;
 	
 	UFUNCTION(Exec)
-	virtual void Join(const FString& Address) override;
+	virtual void Join(uint32 Index) override;
 
 	UFUNCTION(Exec)
 	virtual void LoadMainMenu() override;
@@ -62,6 +62,7 @@ private:
 	void OnCreateSessionComplete(FName SessionName, bool bSuccess);
 	void OnDestroySessionComplete(FName SessionName, bool bSuccess);
 	void OnFindSessionsComplete(bool bSuccess);
+	void OnJoinSessionComplete(FName SessionName, EOnJoinSessionCompleteResult::Type Result);
 
 	void CreateSession();
 };

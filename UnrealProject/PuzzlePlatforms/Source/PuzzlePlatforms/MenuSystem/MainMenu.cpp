@@ -123,15 +123,6 @@ void UMainMenu::HostServer()
 
 void UMainMenu::JoinServer()
 {
-	if (SelectedIndex.IsSet())
-	{
-		UE_LOG(LogTemp, Warning, TEXT("Selected index %d."), SelectedIndex.GetValue());
-	}
-	else
-	{
-		UE_LOG(LogTemp, Warning, TEXT("Selected index not set."));
-	}
-
 	check(MenuInterface);
 	if (!MenuInterface)
 	{
@@ -144,10 +135,20 @@ void UMainMenu::JoinServer()
 		return;
 	}
 
+	
+	if (SelectedIndex.IsSet())
+	{
+		UE_LOG(LogTemp, Warning, TEXT("Selected index %d."), SelectedIndex.GetValue());
+	}
+	else
+	{
+		UE_LOG(LogTemp, Warning, TEXT("Selected index not set."));
+	}
+
 
 	//UE_LOG(LogTemp, Warning, TEXT("JoinServer(%s) - %s"), *IPAddressField->GetText().ToString(), *HostButton->GetName());
 
-	MenuInterface->Join("");
+	MenuInterface->Join(SelectedIndex.GetValue());
 
 	//UWorld* World = GetWorld();
 	//check(World);
