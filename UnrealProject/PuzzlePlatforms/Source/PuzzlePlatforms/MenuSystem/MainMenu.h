@@ -20,6 +20,8 @@ public:
 
 	void SetServerList(TArray<FString> ServerNames);
 
+	void SetSelectedIndex(uint32 Index);
+
 private:
 	virtual bool Initialize() override;
 	
@@ -63,4 +65,6 @@ private:
 	class UScrollBox* ServerList = nullptr;
 
 	TSubclassOf<class UUserWidget> ServerRowClass = nullptr;
+
+	TOptional<uint32> SelectedIndex;
 };

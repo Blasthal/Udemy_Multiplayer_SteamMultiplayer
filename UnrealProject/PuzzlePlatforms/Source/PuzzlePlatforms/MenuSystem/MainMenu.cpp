@@ -29,7 +29,6 @@ UMainMenu::UMainMenu(const FObjectInitializer& ObjectInitializer)
 
 void UMainMenu::SetServerList(TArray<FString> ServerNames)
 {
-
 	UWorld* World = GetWorld();
 	check(World);
 	if (!World)
@@ -46,6 +45,7 @@ void UMainMenu::SetServerList(TArray<FString> ServerNames)
 
 	ServerList->ClearChildren();
 
+	uint32 i = 0;
 	for (const FString& ServerName : ServerNames)
 	{
 		UServerRow* ServerRow = CreateWidget<UServerRow>(this, ServerRowClass);
@@ -56,9 +56,17 @@ void UMainMenu::SetServerList(TArray<FString> ServerNames)
 		}
 
 		ServerRow->ServerName->SetText(FText::FromString(ServerName));
+		ServerRow->Setup(this, i);
+		++i;
 
 		ServerList->AddChild(ServerRow);
 	}
+}
+
+
+void UMainMenu::SetSelectedIndex(uint32 Index)
+{
+	SelectedIndex = Index;
 }
 
 
@@ -115,6 +123,15 @@ void UMainMenu::HostServer()
 
 void UMainMenu::JoinServer()
 {
+	if (SelectedIndex.IsSet())
+	{
+		UE_LOG(LogTemp, Warning, TEXT("Selected index %d."), SelectedIndex.GetValue());
+	}
+	else
+	{
+		UE_LOG(LogTemp, Warning, TEXT("Selected index not set."));
+	}
+
 	check(MenuInterface);
 	if (!MenuInterface)
 	{
@@ -130,7 +147,7 @@ void UMainMenu::JoinServer()
 
 	//UE_LOG(LogTemp, Warning, TEXT("JoinServer(%s) - %s"), *IPAddressField->GetText().ToString(), *HostButton->GetName());
 
-	//MenuInterface->Join(ServerList->selected->GetText().ToString());
+	MenuInterface->Join("");
 
 	//UWorld* World = GetWorld();
 	//check(World);
