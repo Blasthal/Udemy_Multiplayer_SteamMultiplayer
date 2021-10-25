@@ -146,27 +146,7 @@ void UMainMenu::JoinServer()
 	}
 
 
-	//UE_LOG(LogTemp, Warning, TEXT("JoinServer(%s) - %s"), *IPAddressField->GetText().ToString(), *HostButton->GetName());
-
 	MenuInterface->Join(SelectedIndex.GetValue());
-
-	//UWorld* World = GetWorld();
-	//check(World);
-	//if (!World)
-	//{
-	//	return;
-	//}
-
-	//UServerRow* ServerRow = CreateWidget<UServerRow>(this, ServerRowClass);
-	//check(ServerRow);
-	//if (!ServerRow)
-	//{
-	//	return;
-	//}
-
-	//ServerRow->ServerName->SetText(FText::FromString(TEXT("Test")));
-
-	//ServerList->AddChild(ServerRow);
 }
 
 
