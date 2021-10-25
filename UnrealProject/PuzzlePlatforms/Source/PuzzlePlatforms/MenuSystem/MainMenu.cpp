@@ -27,7 +27,7 @@ UMainMenu::UMainMenu(const FObjectInitializer& ObjectInitializer)
 }
 
 
-void UMainMenu::SetServerList(TArray<FString> ServerNames)
+void UMainMenu::SetServerList(TArray<FServerData> ServerDatas)
 {
 	UWorld* World = GetWorld();
 	check(World);
@@ -45,8 +45,27 @@ void UMainMenu::SetServerList(TArray<FString> ServerNames)
 
 	ServerList->ClearChildren();
 
+
+	// TEST
+	{
+		FServerData ServerDataTest;
+		ServerDataTest.Name = TEXT("Test Server Alpha");
+		ServerDatas.Add(ServerDataTest);
+	}
+	{
+		FServerData ServerDataTest;
+		ServerDataTest.Name = TEXT("Test Server Bravo");
+		ServerDatas.Add(ServerDataTest);
+	}
+	{
+		FServerData ServerDataTest;
+		ServerDataTest.Name = TEXT("Test Server Charlie");
+		ServerDatas.Add(ServerDataTest);
+	}
+
+
 	uint32 i = 0;
-	for (const FString& ServerName : ServerNames)
+	for (const FServerData& ServerData : ServerDatas)
 	{
 		UServerRow* ServerRow = CreateWidget<UServerRow>(this, ServerRowClass);
 		check(ServerRow);
@@ -55,7 +74,13 @@ void UMainMenu::SetServerList(TArray<FString> ServerNames)
 			return;
 		}
 
-		ServerRow->ServerName->SetText(FText::FromString(ServerName));
+		ServerRow->ServerName->SetText(FText::FromString(ServerData.Name));
+
+		FString ServerConnectionFraction = FString::Format(_TEXT("{0}/{1}"), { ServerData.CurrentPlayers, ServerData.MaxPlayers });
+		ServerRow->ConnectionFraction->SetText(FText::FromString(ServerConnectionFraction));
+
+		ServerRow->HostUserName->SetText(FText::FromString(ServerData.HostUserName));
+
 		ServerRow->Setup(this, i);
 		++i;
 
@@ -67,6 +92,7 @@ void UMainMenu::SetServerList(TArray<FString> ServerNames)
 void UMainMenu::SetSelectedIndex(uint32 Index)
 {
 	SelectedIndex = Index;
+	UpdateChildren();
 }
 
 
@@ -192,5 +218,24 @@ void UMainMenu::OpenJoinMenu()
 
 	ServerList->ClearChildren();
 	MenuInterface->RefreshServerList();
+}
+
+
+void UMainMenu::UpdateChildren()
+{
+	for (int32 i = 0; i < ServerList->GetChildrenCount(); ++i)
+	{
+		UWidget* Widget = ServerList->GetChildAt(i);
+		UServerRow* ServerRow = CastChecked<UServerRow>(Widget);
+		if (!ServerRow) { continue; }
+
+		if (!SelectedIndex.IsSet())
+		{
+			ServerRow->Selected = false;
+			continue;
+		}
+
+		ServerRow->Selected = (SelectedIndex.GetValue() == i);
+	}
 }
 

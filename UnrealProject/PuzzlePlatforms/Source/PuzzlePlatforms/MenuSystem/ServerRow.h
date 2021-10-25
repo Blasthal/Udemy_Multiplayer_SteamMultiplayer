@@ -17,8 +17,22 @@ class PUZZLEPLATFORMS_API UServerRow : public UUserWidget
 public:
 	virtual bool Initialize() override;
 
+
+	// サーバー名
 	UPROPERTY(meta = (BindWidget))
 	class UTextBlock* ServerName = nullptr;
+
+	// 参加人数 / 最大人数
+	UPROPERTY(meta = (BindWidget))
+	class UTextBlock* ConnectionFraction = nullptr;
+
+	// ホスト名
+	UPROPERTY(meta = (BindWidget))
+	class UTextBlock* HostUserName = nullptr;
+
+
+	UPROPERTY(BlueprintReadOnly)
+	bool Selected = false;
 
 	void Setup(class UMainMenu* Parent, uint32 Index);
 

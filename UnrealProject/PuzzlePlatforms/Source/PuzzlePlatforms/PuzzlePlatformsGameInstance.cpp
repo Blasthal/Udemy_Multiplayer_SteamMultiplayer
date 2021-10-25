@@ -259,15 +259,21 @@ void UPuzzlePlatformsGameInstance::OnFindSessionsComplete(bool bSuccess)
 	}
 
 
-	TArray<FString> ServerNames;
+	TArray<FServerData> ServerDatas;
 	for (FOnlineSessionSearchResult& SearchResult : SessionSearch->SearchResults)
 	{
 		UE_LOG(LogTemp, Warning, TEXT("Find Session Id Str: %s"), *SearchResult.GetSessionIdStr());
 
-		ServerNames.Add(SearchResult.GetSessionIdStr());
+		FServerData ServerData;
+		ServerData.Name = SearchResult.GetSessionIdStr();
+		ServerData.CurrentPlayers = SearchResult.Session.SessionSettings.NumPublicConnections - SearchResult.Session.NumOpenPublicConnections;
+		ServerData.MaxPlayers = SearchResult.Session.SessionSettings.NumPublicConnections;
+		ServerData.HostUserName = SearchResult.Session.OwningUserName;
+
+		ServerDatas.Add(ServerData);
 	}
 
-	MainMenu->SetServerList(ServerNames);
+	MainMenu->SetServerList(ServerDatas);
 }
 
 
@@ -317,7 +323,19 @@ void UPuzzlePlatformsGameInstance::CreateSession()
 	if (SessionInterface.IsValid())
 	{
 		FOnlineSessionSettings SessionSettings;
-		SessionSettings.bIsLANMatch = false;
+
+		IOnlineSubsystem* Subsystem = IOnlineSubsystem::Get();
+		if (Subsystem &&
+			Subsystem->GetSubsystemName() == TEXT("NULL")
+			)
+		{
+			SessionSettings.bIsLANMatch = true;
+		}
+		else
+		{
+			SessionSettings.bIsLANMatch = false;
+		}
+
 		SessionSettings.NumPublicConnections = 2;
 		SessionSettings.bShouldAdvertise = true;
 		SessionSettings.bUsesPresence = true;

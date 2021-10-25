@@ -33,8 +33,7 @@ void UServerRow::Setup(UMainMenu* Parent, uint32 Index)
 void UServerRow::OnClicked()
 {
 	UE_LOG(LogTemp, Warning, TEXT("OnClicked() SelectedIndex=%d"), Index);
-
-	check(MainMenu);
+	
 	if (MainMenu)
 	{
 		MainMenu->SetSelectedIndex(Index);
