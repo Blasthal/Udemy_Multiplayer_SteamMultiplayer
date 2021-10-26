@@ -13,6 +13,7 @@
 namespace
 {
 	const static FName SESSION_NAME = TEXT("My Session Game");
+	const static FName SERVER_NAME_SETTINGS_KEY = TEXT("ServerName");
 }
 
 
@@ -118,8 +119,10 @@ void UPuzzlePlatformsGameInstance::LoadInGameMenu()
 }
 
 
-void UPuzzlePlatformsGameInstance::Host()
+void UPuzzlePlatformsGameInstance::Host(FString ServerName)
 {
+	DesiredServerName = ServerName;
+
 	if (SessionInterface.IsValid())
 	{
 		// 既にセッションがある場合は、セッションを破棄する
@@ -265,10 +268,19 @@ void UPuzzlePlatformsGameInstance::OnFindSessionsComplete(bool bSuccess)
 		UE_LOG(LogTemp, Warning, TEXT("Find Session Id Str: %s"), *SearchResult.GetSessionIdStr());
 
 		FServerData ServerData;
-		ServerData.Name = SearchResult.GetSessionIdStr();
 		ServerData.CurrentPlayers = SearchResult.Session.SessionSettings.NumPublicConnections - SearchResult.Session.NumOpenPublicConnections;
 		ServerData.MaxPlayers = SearchResult.Session.SessionSettings.NumPublicConnections;
 		ServerData.HostUserName = SearchResult.Session.OwningUserName;
+
+		FString ServerName;
+		if (SearchResult.Session.SessionSettings.Get(SERVER_NAME_SETTINGS_KEY, ServerName))
+		{
+			ServerData.Name = ServerName;
+		}
+		else
+		{
+			UE_LOG(LogTemp, Warning, TEXT("Could not find name."));
+		}
 
 		ServerDatas.Add(ServerData);
 	}
@@ -340,6 +352,7 @@ void UPuzzlePlatformsGameInstance::CreateSession()
 		SessionSettings.bShouldAdvertise = true;
 		SessionSettings.bUsesPresence = true;
 		//SessionSettings.bUseLobbiesIfAvailable = true; // UE4.27以降で必要らしい
+		SessionSettings.Set(SERVER_NAME_SETTINGS_KEY, DesiredServerName, EOnlineDataAdvertisementType::Type::ViaOnlineServiceAndPing);
 
 		SessionInterface->CreateSession(0, SESSION_NAME, SessionSettings);
 	}

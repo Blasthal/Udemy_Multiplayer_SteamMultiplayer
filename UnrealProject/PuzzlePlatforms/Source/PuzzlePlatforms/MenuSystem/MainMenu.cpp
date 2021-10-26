@@ -3,6 +3,7 @@
 
 #include "MainMenu.h"
 
+#include "EditableText.h"
 #include "ScrollBox.h"
 #include "Components/Button.h"
 #include "Components/WidgetSwitcher.h"
@@ -24,6 +25,51 @@ UMainMenu::UMainMenu(const FObjectInitializer& ObjectInitializer)
 
 		ServerRowClass = ServerRowBPClass.Class;
 	}
+}
+
+
+bool UMainMenu::Initialize()
+{
+	bool bIsSuccess = Super::Initialize();
+	if (!bIsSuccess)
+	{
+		return false;
+	}
+
+
+	if (HostButton)
+	{
+		HostButton->OnClicked.AddDynamic(this, &UMainMenu::OpenHostMenu);
+	}
+
+	if (HostOkButton)
+	{
+		HostOkButton->OnClicked.AddDynamic(this, &UMainMenu::HostServer);
+	}
+
+	if (HostCancelButton)
+	{
+		HostCancelButton->OnClicked.AddDynamic(this, &UMainMenu::OpenMainMenu);
+	}
+
+
+	if (JoinButton)
+	{
+		JoinButton->OnClicked.AddDynamic(this, &UMainMenu::OpenJoinMenu);
+	}
+
+	if (JoinCancelButton)
+	{
+		JoinCancelButton->OnClicked.AddDynamic(this, &UMainMenu::OpenMainMenu);
+	}
+
+	if (JoinOkButton)
+	{
+		JoinOkButton->OnClicked.AddDynamic(this, &UMainMenu::JoinServer);
+	}
+
+
+	return true;
 }
 
 
@@ -96,54 +142,24 @@ void UMainMenu::SetSelectedIndex(uint32 Index)
 }
 
 
-bool UMainMenu::Initialize()
-{
-	bool bIsSuccess = Super::Initialize();
-	if (!bIsSuccess)
-	{
-		return false;
-	}
-
-
-	if (HostButton)
-	{
-		HostButton->OnClicked.AddDynamic(this, &UMainMenu::HostServer);
-	}
-
-	if (JoinButton)
-	{
-		JoinButton->OnClicked.AddDynamic(this, &UMainMenu::OpenJoinMenu);
-	}
-
-	if (JoinCancelButton)
-	{
-		JoinCancelButton->OnClicked.AddDynamic(this, &UMainMenu::OpenMainMenu);
-	}
-
-	if (JoinOkButton)
-	{
-		JoinOkButton->OnClicked.AddDynamic(this, &UMainMenu::JoinServer);
-	}
-
-	if (ServerList)
-	{
-		// TODO
-	}
-
-
-	return true;
-}
-
-
 void UMainMenu::HostServer()
 {
-	UE_LOG(LogTemp, Warning, TEXT("HostServer - %s"), *HostButton->GetName());
-
+	UE_LOG(LogTemp, Warning, TEXT("HostServer"));
+	
 	check(MenuInterface);
-	if (MenuInterface)
+	if (!MenuInterface)
 	{
-		MenuInterface->Host();
+		return;
 	}
+
+	check(ServerHostName);
+	if (!ServerHostName)
+	{
+		return;
+	}
+
+
+	MenuInterface->Host(ServerHostName->GetText().ToString());
 }
 
 
@@ -192,6 +208,25 @@ void UMainMenu::OpenMainMenu()
 
 	MenuSwitcher->SetActiveWidget(MainMenu);
 }
+
+
+void UMainMenu::OpenHostMenu()
+{
+	check(MenuSwitcher);
+	if (!MenuSwitcher)
+	{
+		return;
+	}
+
+	check(HostMenu);
+	if (!HostMenu)
+	{
+		return;
+	}
+
+	MenuSwitcher->SetActiveWidget(HostMenu);
+}
+
 
 void UMainMenu::OpenJoinMenu()
 {

@@ -30,14 +30,15 @@ class PUZZLEPLATFORMS_API UMainMenu : public UMenuWidget
 public:
 	UMainMenu(const FObjectInitializer& ObjectInitializer);
 
+private:
+	virtual bool Initialize() override;
+
+public:
 	void SetServerList(TArray<FServerData> ServerDatas);
 
 	void SetSelectedIndex(uint32 Index);
 
-private:
-	virtual bool Initialize() override;
-	
-	
+private:	
 	UFUNCTION()
 	void HostServer();
 
@@ -46,6 +47,9 @@ private:
 
 	UFUNCTION()
 	void OpenMainMenu();
+	
+	UFUNCTION()
+	void OpenHostMenu();
 
 	UFUNCTION()
 	void OpenJoinMenu();
@@ -60,11 +64,23 @@ private:
 	UPROPERTY(meta = (BindWidget))
 	class UButton* JoinButton = nullptr;
 
+
 	UPROPERTY(meta = (BindWidget))
 	class UWidgetSwitcher* MenuSwitcher = nullptr;
 
 	UPROPERTY(meta = (BindWidget))
 	class UWidget* MainMenu = nullptr;
+
+
+	UPROPERTY(meta = (BindWidget))
+	class UWidget* HostMenu = nullptr;
+
+	UPROPERTY(meta = (BindWidget))
+	class UButton* HostCancelButton = nullptr;
+
+	UPROPERTY(meta = (BindWidget))
+	class UButton* HostOkButton = nullptr;
+
 
 	UPROPERTY(meta = (BindWidget))
 	class UWidget* JoinMenu = nullptr;
@@ -74,7 +90,10 @@ private:
 
 	UPROPERTY(meta = (BindWidget))
 	class UButton* JoinOkButton = nullptr;
+	
 
+	UPROPERTY(meta = (BindWidget))
+	class UEditableTextBox* ServerHostName = nullptr;
 
 	UPROPERTY(meta = (BindWidget))
 	class UScrollBox* ServerList = nullptr;
