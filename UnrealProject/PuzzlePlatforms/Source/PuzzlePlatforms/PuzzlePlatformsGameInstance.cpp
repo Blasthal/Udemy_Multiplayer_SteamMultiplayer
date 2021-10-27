@@ -12,8 +12,9 @@
 
 namespace
 {
-	const static FName SESSION_NAME = TEXT("My Session Game");
-	const static FName SERVER_NAME_SETTINGS_KEY = TEXT("ServerName");
+	static const FName SESSION_NAME = TEXT("GameSession"); // OSSがNULLの場合はセッション名が強制的に"GameSession"で処理される箇所があるため、揃える
+	static const FName SERVER_NAME_SETTINGS_KEY = TEXT("ServerName");
+	static const uint32 SESSION_MAX_PLAYERS = 5;
 }
 
 
@@ -76,6 +77,13 @@ void UPuzzlePlatformsGameInstance::Init()
 
 	UE_LOG(LogTemp, Warning, TEXT("Founded class %s"), *MenuClass->GetName());
 	UE_LOG(LogTemp, Warning, TEXT("Founded class %s"), *InGameMenuClass->GetName());
+
+
+	// 切断時のエラーコールバック登録
+	if (GEngine)
+	{
+		GEngine->OnNetworkFailure().AddUObject(this, &UPuzzlePlatformsGameInstance::OnNetworkFailure);
+	}
 }
 
 
@@ -145,6 +153,15 @@ void UPuzzlePlatformsGameInstance::Join(uint32 Index)
 	check(SessionSearch.IsValid());
 
 	SessionInterface->JoinSession(0, SESSION_NAME, SessionSearch->SearchResults[Index]);
+}
+
+
+void UPuzzlePlatformsGameInstance::StartSession()
+{
+	if (SessionInterface.IsValid())
+	{
+		SessionInterface->StartSession(SESSION_NAME);
+	}
 }
 
 
@@ -231,8 +248,7 @@ void UPuzzlePlatformsGameInstance::OnCreateSessionComplete(FName SessionName, bo
 	UE_LOG(LogTemp, Warning, TEXT("OnCreateSessionComplete() SessionName=%s"), *SessionName.ToString());
 	Engine->AddOnScreenDebugMessage(INDEX_NONE, 2.0f, FColor::Green, *FString::Format(TEXT("SessionName={0}"), { *SessionName.ToString() } ));
 
-	//World->ServerTravel(TEXT("/Game/ThirdPersonCPP/Maps/ThirdPersonExampleMap"));
-	World->ServerTravel(TEXT("/Game/ThirdPersonCPP/Maps/ThirdPersonExampleMap?listen"));
+	World->ServerTravel(TEXT("/Game/PuzzlePlatforms/Maps/Lobby?listen"));
 }
 
 
@@ -330,6 +346,19 @@ void UPuzzlePlatformsGameInstance::OnJoinSessionComplete(FName SessionName, EOnJ
 }
 
 
+void UPuzzlePlatformsGameInstance::OnNetworkFailure(UWorld* World, UNetDriver* NetDriver, ENetworkFailure::Type FailureType, const FString& ErrorString)
+{
+	UE_LOG(LogTemp, Warning, TEXT("%s"), *ErrorString);
+
+	if (GEngine)
+	{
+		GEngine->AddOnScreenDebugMessage(INDEX_NONE, 2.0f, FColor::Yellow, ErrorString);
+	}
+
+	LoadMainMenu();
+}
+
+
 void UPuzzlePlatformsGameInstance::CreateSession()
 {
 	if (SessionInterface.IsValid())
@@ -348,7 +377,7 @@ void UPuzzlePlatformsGameInstance::CreateSession()
 			SessionSettings.bIsLANMatch = false;
 		}
 
-		SessionSettings.NumPublicConnections = 2;
+		SessionSettings.NumPublicConnections = SESSION_MAX_PLAYERS;
 		SessionSettings.bShouldAdvertise = true;
 		SessionSettings.bUsesPresence = true;
 		//SessionSettings.bUseLobbiesIfAvailable = true; // UE4.27以降で必要らしい
